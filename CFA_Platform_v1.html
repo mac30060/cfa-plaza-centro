@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CFA Plaza Centro — Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+/* ── RESET & VARS ── */
+:root {
+  --bg:      #0C0F14;
+  --s1:      #13171F;
+  --s2:      #1A1F2A;
+  --s3:      #222835;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #E8EDF5;
+  --muted:   #7A8499;
+  --red:     #E31837;
+  --red-b:   #FF5370;
+  --red-dim: rgba(227,24,55,0.12);
+  --red-bdr: rgba(227,24,55,0.3);
+  --green:   #3FB950;
+  --green-dim:rgba(63,185,80,0.12);
+  --green-bdr:rgba(63,185,80,0.3);
+  --amber:   #F59E0B;
+  --amber-dim:rgba(245,158,11,0.12);
+  --amber-bdr:rgba(245,158,11,0.3);
+  --blue:    #58A6FF;
+  --blue-dim:rgba(88,166,255,0.12);
+  --safe-b:  env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;}
+input,textarea,select{font-family:'Inter',sans-serif;}
+button{cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  background: var(--bg);
+}
+.login-card {
+  width:100%;max-width:400px;
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:20px;overflow:hidden;
+}
+.login-header {
+  background:var(--red);padding:32px 32px 28px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.login-logo {
+  width:56px;height:56px;border-radius:14px;
+  background:rgba(0,0,0,0.2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:white;
+}
+.login-title {font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:white;text-align:center;}
+.login-sub {font-size:12px;color:rgba(255,255,255,0.7);text-align:center;}
+.login-body {padding:32px;}
+.login-field {margin-bottom:16px;}
+.login-field label {display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;}
+.login-field input {
+  width:100%;padding:12px 16px;background:var(--s2);
+  border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:14px;outline:none;
+  transition:border-color 0.15s;
+}
+.login-field input:focus {border-color:var(--red);}
+.login-btn {
+  width:100%;padding:14px;background:var(--red);color:white;
+  border:none;border-radius:10px;font-size:15px;font-weight:600;
+  transition:opacity 0.15s;margin-top:8px;
+}
+.login-btn:hover {opacity:0.9;}
+.login-btn:disabled {opacity:0.5;}
+.login-error {
+  background:var(--red-dim);border:1px solid var(--red-bdr);
+  border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red-b);
+  margin-bottom:16px;display:none;
+}
+.login-badge {
+  margin-top:20px;padding:10px 14px;background:var(--s2);
+  border-radius:8px;font-size:11px;color:var(--muted);text-align:center;line-height:1.6;
+}
+
+/* ── MAIN APP ── */
+#app {display:none;}
+
+/* ── LAYOUT ── */
+.layout {display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width:240px;flex-shrink:0;
+  background:var(--s1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:50;
+  overflow-y:auto;
+}
+.logo-area {padding:20px 16px 16px;}
+.logo-top {display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.logo-ico {
+  width:36px;height:36px;border-radius:9px;
+  background:var(--red);display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:white;flex-shrink:0;
+}
+.logo-name {font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;}
+.logo-sub  {font-size:11px;color:var(--muted);}
+.logo-badge {
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  background:var(--red-dim);border:1px solid var(--red-bdr);
+  font-size:10px;font-weight:700;color:var(--red-b);letter-spacing:0.5px;
+}
+.nav {flex:1;padding:8px 10px;}
+.nav-grp {
+  font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);padding:14px 8px 6px;
+}
+.nb {
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 10px;border-radius:9px;border:none;
+  background:transparent;color:var(--muted);font-size:13px;font-weight:500;
+  text-align:left;transition:all 0.12s;
+}
+.nb:hover {background:var(--s2);color:var(--text);}
+.nb.active {background:var(--red-dim);color:var(--text);border:1px solid var(--red-bdr);}
+.nb.active .ni {color:var(--red-b);}
+.ni {font-size:16px;flex-shrink:0;}
+.sfoot {
+  padding:16px;border-top:1px solid var(--border);
+  font-size:10px;color:var(--muted);line-height:1.8;
+}
+.sfoot strong {display:block;font-size:11px;color:var(--text);margin-bottom:2px;}
+
+/* User badge in footer */
+.user-badge {
+  padding:10px 12px;margin:8px 10px;
+  background:var(--s2);border-radius:10px;border:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.user-avatar {
+  width:30px;height:30px;border-radius:50%;
+  background:var(--red-dim);border:1px solid var(--red-bdr);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--red-b);flex-shrink:0;
+}
+.user-name {font-size:12px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-role {font-size:10px;color:var(--muted);}
+.logout-btn {
+  font-size:11px;color:var(--muted);background:none;border:none;
+  padding:2px 6px;border-radius:4px;
+}
+.logout-btn:hover {color:var(--red-b);}
+
+/* ── MAIN ── */
+.main {margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* ── TOPBAR ── */
+.topbar {
+  padding:18px 40px;border-bottom:1px solid var(--border);
+  background:var(--s1);display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;z-index:40;
+}
+.topbar h1 {font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;}
+.topbar p  {font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ── CONTENT SECTIONS ── */
+.content {display:none;padding:32px 40px;max-width:1040px;}
+.content.active {display:block;}
+
+/* ── SECTION LABEL ── */
+.slbl {
+  font-size:10px;font-weight:700;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:16px;display:flex;align-items:center;gap:12px;
+}
+.slbl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── KPI GRID ── */
+.kg {display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+.kpi {
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:12px;padding:16px;border-top:3px solid;
+}
+.kpi.r{border-top-color:var(--red);}
+.kpi.g{border-top-color:var(--green);}
+.kpi.a{border-top-color:var(--amber);}
+.kpi.b{border-top-color:var(--blue);}
+.kl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.kv{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;line-height:1;}
+.kpi.r .kv{color:var(--red-b);}
+.kpi.g .kv{color:var(--green);}
+.kpi.a .kv{color:var(--amber);}
+.kpi.b .kv{color:var(--blue);}
+.kn{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ── CARD ── */
+.card {background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px;}
+.card h3 {font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* ── CALLOUT ── */
+.cl {border-radius:10px;padding:12px 16px;font-size:13px;margin:12px 0;border-left:3px solid;line-height:1.65;}
+.clb {background:var(--blue-dim);border-color:var(--blue);color:#93c5fd;}
+.clg {background:var(--green-dim);border-color:var(--green);color:#86efac;}
+.clr {background:var(--red-dim);border-color:var(--red);color:#ffb3c0;}
+.cla {background:var(--amber-dim);border-color:var(--amber);color:#fcd34d;}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+
+/* ── UPLOAD AREA ── */
+.upload-zone {
+  border:2px dashed var(--border2);border-radius:14px;
+  padding:40px 24px;text-align:center;
+  background:var(--s2);transition:all 0.15s;cursor:pointer;
+}
+.upload-zone:hover,.upload-zone.drag {border-color:var(--red);background:var(--red-dim);}
+.upload-zone input[type=file]{display:none;}
+.upload-icon {font-size:36px;margin-bottom:12px;}
+.upload-title {font-size:15px;font-weight:600;margin-bottom:6px;}
+.upload-sub {font-size:12px;color:var(--muted);}
+
+/* ── WEEK CARD ── */
+.week-card {
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;margin-bottom:12px;
+}
+.week-head {
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+}
+.week-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}
+.week-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.wk-status{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+.ws-pend{background:var(--s3);color:var(--muted);}
+.ws-ok  {background:var(--green-dim);color:var(--green);border:1px solid var(--green-bdr);}
+.ws-bad {background:var(--red-dim);color:var(--red-b);border:1px solid var(--red-bdr);}
+.ws-warn{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-bdr);}
+.week-metrics{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+.wm-cell{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.wm-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.wm-val{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;line-height:1;}
+.wm-val.ok{color:var(--green);}
+.wm-val.bad{color:var(--red-b);}
+.wm-val.warn{color:var(--amber);}
+.wm-val.pend{color:var(--muted);}
+.wm-note{font-size:10px;margin-top:3px;}
+
+/* ── ANALYSIS RESULT ── */
+.analysis-box {
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:12px;padding:20px;margin-top:16px;
+  font-size:13px;line-height:1.8;color:var(--text);
+  white-space:pre-wrap;display:none;
+}
+.analysis-box.visible{display:block;}
+
+/* ── AI LOADER ── */
+.ai-loader {
+  display:none;align-items:center;gap:12px;
+  padding:16px 20px;background:var(--blue-dim);
+  border:1px solid rgba(88,166,255,0.2);border-radius:10px;
+  font-size:13px;color:var(--blue);margin-top:12px;
+}
+.ai-loader.visible{display:flex;}
+.spinner {
+  width:18px;height:18px;border-radius:50%;flex-shrink:0;
+  border:2px solid rgba(88,166,255,0.3);border-top-color:var(--blue);
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── EVENTS ── */
+.evt-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.evt-grid{grid-template-columns:1fr;}}
+.evt-day {background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.evt-day-head {
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.evt-day-title {font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;}
+.add-evt-btn {
+  width:26px;height:26px;border-radius:50%;background:var(--red);
+  border:none;color:white;font-size:16px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.evt-form {display:none;padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--border);}
+.evt-form input,.evt-form textarea,.evt-form select {
+  width:100%;padding:8px 10px;background:var(--s3);color:var(--text);
+  border:1px solid var(--border);border-radius:7px;font-size:12px;margin-bottom:8px;
+}
+.evt-form textarea {resize:none;rows:2;}
+.evt-form-btns {display:flex;gap:6px;}
+.evt-submit {padding:6px 14px;background:var(--red);color:white;border:none;border-radius:7px;font-size:12px;font-weight:600;}
+.evt-cancel {padding:6px 12px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:7px;font-size:12px;}
+.evt-list {padding:4px 14px 12px;}
+.evt-item {display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+.evt-item:last-child{border-bottom:none;}
+.evt-emoji {font-size:18px;flex-shrink:0;}
+.evt-body strong{display:block;font-size:12px;font-weight:600;}
+.evt-body span{font-size:11px;color:var(--muted);}
+.evt-del {background:none;border:none;color:var(--muted);font-size:14px;opacity:0.5;margin-left:auto;flex-shrink:0;}
+.evt-del:hover{opacity:1;color:var(--red-b);}
+.evt-empty {font-size:11px;color:var(--muted);text-align:center;padding:14px 0;}
+
+/* ── SOPs ── */
+.sop-link {
+  display:flex;align-items:center;gap:14px;
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:12px;padding:14px 18px;margin-bottom:10px;
+  text-decoration:none;transition:border-color 0.15s;
+}
+.sop-link:hover{border-color:var(--red);}
+.sop-icon {width:38px;height:38px;border-radius:9px;background:var(--red-dim);border:1px solid var(--red-bdr);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.sop-name {font-size:13px;font-weight:600;color:var(--text);}
+.sop-cat {font-size:11px;color:var(--muted);}
+.sop-arrow {margin-left:auto;color:var(--red-b);font-size:14px;font-weight:700;}
+
+/* ── FORM ELEMENTS ── */
+.field-group {margin-bottom:14px;}
+.field-group label {display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;letter-spacing:0.5px;text-transform:uppercase;}
+.field-group input,.field-group select,.field-group textarea {
+  width:100%;padding:10px 14px;background:var(--s2);
+  border:1px solid var(--border);border-radius:9px;
+  color:var(--text);font-size:13px;outline:none;transition:border-color 0.15s;
+}
+.field-group input:focus,.field-group select:focus {border-color:var(--red);}
+.btn-primary {padding:10px 22px;background:var(--red);color:white;border:none;border-radius:9px;font-size:13px;font-weight:600;}
+.btn-secondary {padding:10px 22px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9px;font-size:13px;}
+
+/* ── GOALS TABLE ── */
+.goals-bar {margin-bottom:12px;}
+.goals-row {display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+.goals-row:last-child{border-bottom:none;}
+.goal-name {font-size:13px;font-weight:600;flex:1;min-width:130px;}
+.goal-track {flex:1;min-width:100px;height:6px;background:var(--s3);border-radius:3px;overflow:hidden;}
+.goal-fill {height:100%;border-radius:3px;}
+.goal-nums {display:flex;gap:14px;align-items:center;flex-shrink:0;}
+.goal-real {font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;}
+.goal-target {font-size:11px;color:var(--muted);}
+
+/* ── ADMIN ── */
+.user-row {display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.user-row:last-child{border-bottom:none;}
+.role-badge {padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.role-lider {background:var(--blue-dim);color:var(--blue);border:1px solid rgba(88,166,255,0.3);}
+.role-director {background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-bdr);}
+.role-operador {background:var(--red-dim);color:var(--red-b);border:1px solid var(--red-bdr);}
+.role-franquiciador {background:var(--green-dim);color:var(--green);border:1px solid var(--green-bdr);}
+
+/* ── MOBILE ── */
+.bot-nav {
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:var(--s1);border-top:1px solid var(--border);
+  padding:8px 0 calc(8px + var(--safe-b));z-index:100;
+  display:none;grid-template-columns:repeat(5,1fr);
+}
+.bn {
+  display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:4px 2px;border:none;background:transparent;
+  color:var(--muted);font-size:9px;font-weight:600;
+}
+.bn.active{color:var(--red-b);}
+.bni{font-size:20px;}
+
+.mob-bar {
+  display:none;padding:12px 16px;
+  background:var(--s1);border-bottom:1px solid var(--border);
+  align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:60;
+}
+
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .main{margin-left:0;}
+  .topbar{display:none;}
+  .content{padding:16px 16px 80px;}
+  .mob-bar{display:flex;}
+  .bot-nav{display:grid;}
+  .kg{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">CFA</div>
+      <div class="login-title">CFA Plaza Centro</div>
+      <div class="login-sub">Operations Platform · Caguas, Puerto Rico</div>
+    </div>
+    <div class="login-body">
+      <div class="login-error" id="login-err"></div>
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+      <div class="login-badge">
+        ¿No tienes acceso? Contacta al Operador<br>para que te cree una cuenta.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="app">
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo-top">
+        <div class="logo-ico">CFA</div>
+        <div>
+          <div class="logo-name">CFA Plaza Centro</div>
+          <div class="logo-sub">Caguas, Puerto Rico</div>
+        </div>
+      </div>
+      <div class="logo-badge">LÍDERES ONLY</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-grp">Overview</div>
+      <button class="nb active" onclick="go('home',this)"><span class="ni">🏠</span>Home</button>
+      <div class="nav-grp">Reportes</div>
+      <button class="nb" onclick="go('tracker',this)"><span class="ni">📈</span>Weekly Tracker</button>
+      <button class="nb" onclick="go('smartshop',this)"><span class="ni">🎯</span>Smart Shop</button>
+      <button class="nb" onclick="go('foodcost',this)"><span class="ni">🍽️</span>Food Cost</button>
+      <button class="nb" onclick="go('sos',this)"><span class="ni">⚡</span>Speed of Service</button>
+      <button class="nb" onclick="go('labor',this)"><span class="ni">👥</span>Labor</button>
+      <button class="nb" onclick="go('cem',this)"><span class="ni">⭐</span>CEM</button>
+      <div class="nav-grp">Tienda</div>
+      <button class="nb" onclick="go('events',this)"><span class="ni">📅</span>Eventos</button>
+      <button class="nb" onclick="go('sops',this)"><span class="ni">📚</span>SOPs</button>
+      <button class="nb nb-admin" onclick="go('admin',this)" style="display:none"><span class="ni">⚙️</span>Admin</button>
+    </nav>
+    <div class="user-badge" id="user-badge">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div style="flex:1;min-width:0">
+        <div class="user-name" id="user-name">...</div>
+        <div class="user-role" id="user-role">...</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Salir">✕</button>
+    </div>
+    <div class="sfoot">
+      <strong>Última actualización</strong>
+      13 de mayo, 2026
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Mobile top bar -->
+    <div class="mob-bar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="logo-ico" style="width:30px;height:30px;font-size:12px">CFA</div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700">CFA Plaza Centro</div>
+          <div style="font-size:10px;color:var(--muted)" id="mob-section">Home</div>
+        </div>
+      </div>
+      <button onclick="doLogout()" style="background:none;border:none;color:var(--muted);font-size:12px">Salir</button>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">Operations Dashboard</h1>
+        <p id="page-sub">Vista general · Mayo 2026</p>
+      </div>
+      <div style="font-size:12px;color:var(--muted)" id="topbar-user"></div>
+    </div>
+
+    <!-- ── HOME ── -->
+    <div id="sec-home" class="content active">
+      <div class="slbl">Metas del Mes — Mayo 2026</div>
+      <div id="home-goals-strip"></div>
+
+      <div class="slbl">Resumen Semanal Más Reciente</div>
+      <div id="home-latest-week">
+        <div class="cl clb">Cargando datos...</div>
+      </div>
+
+      <div class="slbl">Accesos rápidos</div>
+      <div class="two-col">
+        <div class="card" style="cursor:pointer" onclick="go('tracker')">
+          <h3>📈 Weekly Tracker</h3>
+          <p style="font-size:13px;color:var(--muted)">Subir reportes de la semana y ver el progreso vs metas del mes.</p>
+        </div>
+        <div class="card" style="cursor:pointer" onclick="go('events')">
+          <h3>📅 Eventos & Anuncios</h3>
+          <p style="font-size:13px;color:var(--muted)">Ver y añadir eventos de la semana para el equipo.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WEEKLY TRACKER ── -->
+    <div id="sec-tracker" class="content">
+      <div class="slbl">Weekly Tracker — Mayo 2026</div>
+
+      <!-- Upload section — only for directors and above -->
+      <div id="upload-section" style="display:none">
+        <div class="card" style="margin-bottom:20px">
+          <h3>📅 Semana a actualizar</h3>
+          <div class="field-group" style="max-width:320px;margin-bottom:0">
+            <label>Selecciona la semana</label>
+            <select id="week-select">
+              <option value="Semana 1|2026-05-01|2026-05-08">Semana 1 — Mayo 1–8</option>
+              <option value="Semana 2|2026-05-09|2026-05-15">Semana 2 — Mayo 9–15</option>
+              <option value="Semana 3|2026-05-16|2026-05-22">Semana 3 — Mayo 16–22</option>
+              <option value="Semana 4|2026-05-23|2026-05-31">Semana 4 — Mayo 23–31</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- SOS UPLOAD -->
+        <div class="card" style="margin-bottom:14px">
+          <h3>⚡ Speed of Service</h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Sube el reporte de SOS o un screenshot de la pantalla — Front Counter y Drive Thru.</p>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--s2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-weight:500">
+              <span>📁</span> Seleccionar archivo
+              <input type="file" id="file-sos" accept=".pdf,.xlsx,.xls,.csv,.txt,image/*" style="display:none" onchange="fileSelected('sos',this)">
+            </label>
+            <span id="file-sos-name" style="font-size:12px;color:var(--muted)">Ningún archivo seleccionado</span>
+            <div id="sos-loader" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--blue)">
+              <div class="spinner" style="width:14px;height:14px"></div> Analizando...
+            </div>
+            <span id="sos-status" style="display:none;font-size:12px;font-weight:600"></span>
+          </div>
+          <div id="sos-result" style="margin-top:12px;display:none;background:var(--s2);border-radius:8px;padding:12px;font-size:12px;color:var(--text);line-height:1.7"></div>
+          <button onclick="analyzeArea('sos')" id="btn-sos" style="margin-top:12px;display:none" class="btn-primary">🤖 Analizar SOS</button>
+        </div>
+
+        <!-- LABOR UPLOAD -->
+        <div class="card" style="margin-bottom:14px">
+          <h3>👥 Labor Productivity</h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Sube el reporte de Labor Productivity o un screenshot — acepta PDF, Excel, o imagen.</p>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--s2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-weight:500">
+              <span>📁</span> Seleccionar archivo
+              <input type="file" id="file-labor" accept=".pdf,.xlsx,.xls,.csv,.txt,image/*" style="display:none" onchange="fileSelected('labor',this)">
+            </label>
+            <span id="file-labor-name" style="font-size:12px;color:var(--muted)">Ningún archivo seleccionado</span>
+            <div id="labor-loader" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--blue)">
+              <div class="spinner" style="width:14px;height:14px"></div> Analizando...
+            </div>
+            <span id="labor-status" style="display:none;font-size:12px;font-weight:600"></span>
+          </div>
+          <div id="labor-result" style="margin-top:12px;display:none;background:var(--s2);border-radius:8px;padding:12px;font-size:12px;color:var(--text);line-height:1.7"></div>
+          <button onclick="analyzeArea('labor')" id="btn-labor" style="margin-top:12px;display:none" class="btn-primary">🤖 Analizar Labor</button>
+        </div>
+
+        <!-- CEM UPLOAD -->
+        <div class="card" style="margin-bottom:20px">
+          <h3>⭐ CEM — Customer Experience</h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Sube el reporte de CEM o un screenshot — acepta PDF, Excel, o imagen.</p>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--s2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-weight:500">
+              <span>📁</span> Seleccionar archivo
+              <input type="file" id="file-cem" accept=".pdf,.xlsx,.xls,.csv,.txt,image/*" style="display:none" onchange="fileSelected('cem',this)">
+            </label>
+            <span id="file-cem-name" style="font-size:12px;color:var(--muted)">Ningún archivo seleccionado</span>
+            <div id="cem-loader" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--blue)">
+              <div class="spinner" style="width:14px;height:14px"></div> Analizando...
+            </div>
+            <span id="cem-status" style="display:none;font-size:12px;font-weight:600"></span>
+          </div>
+          <div id="cem-result" style="margin-top:12px;display:none;background:var(--s2);border-radius:8px;padding:12px;font-size:12px;color:var(--text);line-height:1.7"></div>
+          <button onclick="analyzeArea('cem')" id="btn-cem" style="margin-top:12px;display:none" class="btn-primary">🤖 Analizar CEM</button>
+        </div>
+
+        <!-- SAVE ALL -->
+        <div style="margin-bottom:28px">
+          <button class="btn-primary" id="save-btn" style="display:none;font-size:15px;padding:14px 28px" onclick="saveWeeklyData()">
+            💾 Guardar semana en el Dashboard
+          </button>
+          <p id="save-note" style="font-size:12px;color:var(--muted);margin-top:8px;display:none">
+            Analiza al menos un área antes de guardar. Puedes guardar con los datos disponibles y añadir más después.
+          </p>
+        </div>
+      </div>
+
+      <!-- Weekly cards -->
+      <div class="slbl">Progreso Mayo 2026</div>
+      <div id="weekly-cards">
+        <div class="cl clb">Cargando semanas...</div>
+      </div>
+    </div>
+
+    <!-- ── SMART SHOP ── -->
+    <div id="sec-smartshop" class="content">
+      <div class="slbl">Smart Shop — Abril 2026</div>
+      <div class="card">
+        <h3>🎯 Scores por canal</h3>
+        <div class="kg">
+          <div class="kpi a"><div class="kl">Drive Thru</div><div class="kv">41/44</div><div class="kn">Ambas visitas · 3 oport.</div></div>
+          <div class="kpi g"><div class="kl">Carry Out</div><div class="kv">44/44</div><div class="kn">Martes perfecto ✅</div></div>
+          <div class="kpi g"><div class="kl">Int. Facilities</div><div class="kv">12/12</div><div class="kn">Perfecto ambas visitas</div></div>
+          <div class="kpi g"><div class="kl">Ext. Facilities</div><div class="kv">3/3</div><div class="kn">Perfecto ambas visitas</div></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card"><h3>🍗 BOH Oportunidades</h3>
+          <ul style="list-style:none;font-size:13px;display:flex;flex-direction:column;gap:8px">
+            <li style="color:var(--red-b)">⚠ Waffle Fries underfilled — 2/2 visitas</li>
+            <li style="color:var(--red-b)">⚠ Missing Honey Roasted BBQ (Vier. DT)</li>
+            <li style="color:var(--red-b)">⚠ 1 lettuce en Grilled (Martes DT)</li>
+            <li style="color:var(--amber)">⚠ Fry temps bajas viernes</li>
+          </ul>
+        </div>
+        <div class="card"><h3>🙋 FOH Oportunidades</h3>
+          <ul style="list-style:none;font-size:13px;display:flex;flex-direction:column;gap:8px">
+            <li style="color:var(--red-b)">⚠ Guest name x2 — 3/4 evaluaciones</li>
+            <li style="color:var(--red-b)">⚠ Verbal direction — DT ambas visitas</li>
+            <li style="color:var(--red-b)">⚠ Fond farewell — 2 canales</li>
+            <li style="color:var(--amber)">⚠ Queue viernes: 10:36 (+93%)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FOOD COST ── -->
+    <div id="sec-foodcost" class="content">
+      <div class="slbl">Food Cost — Abril 2026</div>
+      <div class="kg">
+        <div class="kpi r"><div class="kl">Food Cost Real</div><div class="kv">30.93%</div><div class="kn">Meta: ≤30.73%</div></div>
+        <div class="kpi r"><div class="kl">Sobre Target</div><div class="kv">$1,590</div><div class="kn">Este mes</div></div>
+        <div class="kpi r"><div class="kl">Dessert Gap</div><div class="kv">+$1,905</div><div class="kn">Mayor categoría</div></div>
+        <div class="kpi g"><div class="kl">Oil (Favorable)</div><div class="kv">-$1,922</div><div class="kn">Validar boil out</div></div>
+      </div>
+      <div class="cl clr" style="margin-bottom:16px"><strong>Causa raíz</strong>Sin monitoreo activo de porciones. IceDream sin visual aid. No hay waste log de buns por daypart.</div>
+    </div>
+
+    <!-- ── SOS ── -->
+    <div id="sec-sos" class="content">
+      <div class="slbl">Speed of Service — Abril 2026</div>
+      <div class="kg">
+        <div class="kpi g"><div class="kl">FC Total Time</div><div class="kv">3:14</div><div class="kn">Meta: ≤4:00 ✅</div></div>
+        <div class="kpi r"><div class="kl">DT Total Time</div><div class="kv">4:31</div><div class="kn">Meta: ≤4:00 ❌</div></div>
+        <div class="kpi r"><div class="kl">DT Fulfillment</div><div class="kv">3:00</div><div class="kn">Bottleneck en BOH</div></div>
+        <div class="kpi a"><div class="kl">Breakfast DT</div><div class="kv">4:03</div><div class="kn">Daypart más lento</div></div>
+      </div>
+      <div class="cl clr"><strong>Causa raíz</strong>BOH reactivo — produce durante el rush en vez de anticipar. Sin plan de producción por daypart. Viernes PM sin protocolo de posicionamiento.</div>
+    </div>
+
+    <!-- ── LABOR ── -->
+    <div id="sec-labor" class="content">
+      <div class="slbl">Labor Productivity — Abril 2026</div>
+      <div class="kg">
+        <div class="kpi r"><div class="kl">Productividad Real</div><div class="kv">$76.42</div><div class="kn">Meta: ≥$80/hr</div></div>
+        <div class="kpi r"><div class="kl">Horas Sobre Bench.</div><div class="kv">1,137</div><div class="kn">de 10,234 totales</div></div>
+        <div class="kpi r"><div class="kl">Oportunidad $</div><div class="kv">$15.5K</div><div class="kn">Mes de Abril</div></div>
+        <div class="kpi g"><div class="kl">Mejor Día (Sáb.)</div><div class="kv">$87/hr</div><div class="kn">Cerca del benchmark</div></div>
+      </div>
+      <div class="cl clr"><strong>Causa raíz</strong>Schedule de lunes/martes sobre-staffeado vs ventas reales. Sin revisión semanal de horas vs benchmark por día.</div>
+    </div>
+
+    <!-- ── CEM ── -->
+    <div id="sec-cem" class="content">
+      <div class="slbl">CEM — Mayo 2026 · 77 respuestas</div>
+      <div class="kg">
+        <div class="kpi a"><div class="kl">Overall</div><div class="kv">88%</div><div class="kn">PR: 94% · -6pts</div></div>
+        <div class="kpi a"><div class="kl">Taste of Food</div><div class="kv">91%</div><div class="kn">PR: 94% · -3pts</div></div>
+        <div class="kpi r"><div class="kl">Fast Service</div><div class="kv">84%</div><div class="kn">PR: 88% · -4pts</div></div>
+        <div class="kpi a"><div class="kl">Cleanliness</div><div class="kv">87%</div><div class="kn">PR: 92% · -5pts</div></div>
+        <div class="kpi g"><div class="kl">Order Accuracy</div><div class="kv">99%</div><div class="kn">PR: 99% ✅</div></div>
+      </div>
+    </div>
+
+    <!-- ── EVENTS ── -->
+    <div id="sec-events" class="content">
+      <div class="slbl">Eventos y Anuncios — Semana Actual</div>
+      <div class="cl clb" style="margin-bottom:20px">Añade eventos por día. Todos los líderes los ven en tiempo real.</div>
+      <div class="evt-grid" id="evt-grid"></div>
+    </div>
+
+    <!-- ── SOPs ── -->
+    <div id="sec-sops" class="content">
+      <div class="slbl">Biblioteca de SOPs</div>
+      <div class="cl clb" style="margin-bottom:20px">Haz click en cualquier SOP para abrirlo directamente en tu browser.</div>
+      <div id="sops-list"><div class="cl clb">Cargando SOPs...</div></div>
+
+      <!-- Add SOP — operador only -->
+      <div id="add-sop-section" style="display:none;margin-top:24px">
+        <div class="slbl">Añadir SOP</div>
+        <div class="card">
+          <div class="two-col">
+            <div class="field-group">
+              <label>Nombre del SOP</label>
+              <input type="text" id="sop-name" placeholder="Ej: Fryer Oil Change Procedure">
+            </div>
+            <div class="field-group">
+              <label>Categoría</label>
+              <select id="sop-cat">
+                <option>BOH — Kitchen Operations</option>
+                <option>FOH — Guest Experience</option>
+                <option>Food Safety & Sanitation</option>
+                <option>HR & Training</option>
+                <option>Opening & Closing</option>
+                <option>Equipment & Maintenance</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Google Drive Link</label>
+            <input type="url" id="sop-url" placeholder="https://drive.google.com/file/d/...">
+          </div>
+          <button class="btn-primary" onclick="addSOP()">Añadir SOP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN ── -->
+    <div id="sec-admin" class="content">
+      <div class="slbl">Admin — Gestión de Usuarios</div>
+      <div class="card">
+        <h3>👥 Usuarios del Sistema</h3>
+        <div id="admin-users"><div class="cl clb">Cargando...</div></div>
+      </div>
+      <div style="margin-top:24px">
+        <div class="slbl">Crear Nuevo Usuario</div>
+        <div class="card">
+          <div class="two-col">
+            <div class="field-group">
+              <label>Nombre Completo</label>
+              <input type="text" id="new-user-name" placeholder="Ej: Juan Rivera">
+            </div>
+            <div class="field-group">
+              <label>Email</label>
+              <input type="email" id="new-user-email" placeholder="juan@cfa.com">
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="field-group">
+              <label>Password Temporal</label>
+              <input type="text" id="new-user-pass" placeholder="Mínimo 8 caracteres">
+            </div>
+            <div class="field-group">
+              <label>Rol</label>
+              <select id="new-user-role">
+                <option value="lider">Líder de Turno</option>
+                <option value="director">Director BOH/FOH</option>
+                <option value="operador">Operador</option>
+                <option value="franquiciador">Franquiciador</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="createUser()">Crear Usuario</button>
+          <div id="create-user-msg" style="margin-top:10px;font-size:13px;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Mobile bottom nav -->
+<nav class="bot-nav" id="bot-nav">
+  <button class="bn active" onclick="go('home',this)" id="bn-home"><span class="bni">🏠</span>Home</button>
+  <button class="bn" onclick="go('tracker',this)" id="bn-tracker"><span class="bni">📈</span>Tracker</button>
+  <button class="bn" onclick="go('events',this)" id="bn-events"><span class="bni">📅</span>Eventos</button>
+  <button class="bn" onclick="go('sops',this)" id="bn-sops"><span class="bni">📚</span>SOPs</button>
+  <button class="bn" onclick="go('cem',this)" id="bn-cem"><span class="bni">⭐</span>CEM</button>
+</nav>
+</div><!-- /app -->
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const SUPA_URL  = 'https://bpdjeiooqhmypatahfqs.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZGplaW9vcWhteXBhdGFoZnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NzQzMTMsImV4cCI6MjA5NDQ1MDMxM30.EAxPJy4sAVeK7xONh1e7SjCdwrcgPHzuJRbe7mtHA40';
+const CLAUDE_KEY = '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';
+const DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+// ── SUPABASE CLIENT — init after DOM ready ─────────────────────────────────
+let sb = null;
+let currentUser = null;
+let currentProfile = null;
+let pendingWeekData = null;
+
+// ── AUTH ───────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-err');
+
+  if (!email || !pass) { showErr('Ingresa tu email y contraseña.'); return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  err.style.display = 'none';
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) {
+      let msg = error.message;
+      if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) msg = 'Email o contraseña incorrectos.';
+      else if (msg.includes('Email not confirmed')) msg = 'Confirma tu email primero — revisa tu bandeja de entrada.';
+      else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) msg = 'Error de red. Intenta de nuevo en unos segundos.';
+      showErr(msg);
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    await initApp(data.user);
+  } catch(e) {
+    console.error('Login error:', e);
+    showErr('Error inesperado: ' + e.message + '. Intenta recargar la página.');
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+function showErr(msg) {
+  const err = document.getElementById('login-err');
+  err.textContent = msg; err.style.display = 'block';
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null; currentProfile = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// Check existing session on load
+window.addEventListener('DOMContentLoaded', async () => {
+  // Initialize Supabase client AFTER SDK is loaded
+  try {
+    const { createClient } = window.supabase;
+    sb = createClient(SUPA_URL, SUPA_KEY, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+        flowType: 'implicit'
+      }
+    });
+  } catch(e) {
+    showErr('Error iniciando la app. Recarga la página.');
+    console.error('Supabase init error:', e);
+    return;
+  }
+
+  // Enter key on login
+  document.getElementById('login-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // Check for existing session
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      await initApp(session.user);
+    }
+  } catch(e) {
+    console.error('Session check failed:', e);
+  }
+});
+
+// ── INIT APP ───────────────────────────────────────────────────────────────
+async function initApp(user) {
+  currentUser = user;
+
+  // Load profile
+  let profile = null;
+  try {
+    const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    profile = data;
+  } catch(e) {}
+  currentProfile = profile || { full_name: user.email.split('@')[0], role: 'lider' };
+
+  // If full_name is still the email, use the part before @
+  if (currentProfile.full_name && currentProfile.full_name.includes('@')) {
+    currentProfile.full_name = currentProfile.full_name.split('@')[0];
+  }
+
+  // Update UI
+  const initials = currentProfile.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-name').textContent = currentProfile.full_name;
+  document.getElementById('user-role').textContent = roleLabel(currentProfile.role);
+  document.getElementById('topbar-user').textContent = currentProfile.full_name + ' · ' + roleLabel(currentProfile.role);
+
+  // Show/hide admin + upload based on role
+  const canUpload = ['director','operador','franquiciador'].includes(currentProfile.role);
+  const isAdmin   = ['operador','franquiciador'].includes(currentProfile.role);
+  if (canUpload) document.getElementById('upload-section').style.display = 'block';
+  if (isAdmin)   { document.querySelector('.nb-admin').style.display = 'flex'; document.getElementById('add-sop-section').style.display = 'block'; }
+
+  // Show app
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('bot-nav').style.display = 'grid';
+
+  // Load data
+  await Promise.all([loadHomeGoals(), loadLatestWeek(), loadWeeklyCards(), loadEvents(), loadSOPs()]);
+  if (isAdmin) loadAdminUsers();
+}
+
+function roleLabel(r) {
+  return { lider:'Líder de Turno', director:'Director BOH/FOH', operador:'Operador', franquiciador:'Franquiciador' }[r] || r;
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
+const pageNames = {
+  home:'Operations Dashboard', tracker:'Weekly Tracker',
+  smartshop:'Smart Shop', foodcost:'Food Cost', sos:'Speed of Service',
+  labor:'Labor', cem:'CEM', events:'Eventos', sops:'SOPs', admin:'Admin'
+};
+const pageSubs = {
+  home:'Vista general · Mayo 2026', tracker:'Mayo 2026 · Progreso semanal',
+  smartshop:'Abril 2026 · 2 visitas', foodcost:'Abril 2026',
+  sos:'Abril 2026 · FC + DT', labor:'Abril 2026', cem:'Mayo 2026 · 77 respuestas',
+  events:'Tablero semanal', sops:'Procedimientos Operacionales', admin:'Gestión de usuarios'
+};
+
+function go(id, btn) {
+  document.querySelectorAll('.content').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nb,.bn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('sec-'+id);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.nb').forEach(b => { if(b.onclick?.toString().includes("'"+id+"'")) b.classList.add('active'); });
+  const bb = document.getElementById('bn-'+id);
+  if (bb) bb.classList.add('active');
+  document.getElementById('page-title').textContent = pageNames[id] || id;
+  document.getElementById('page-sub').textContent   = pageSubs[id] || '';
+  document.getElementById('mob-section').textContent = pageNames[id] || id;
+  window.scrollTo(0,0);
+}
+
+// ── LOAD HOME GOALS ────────────────────────────────────────────────────────
+async function loadHomeGoals() {
+  const { data } = await sb.from('monthly_goals').select('*').eq('month_year','Mayo 2026').single();
+  const g = data || { food_cost_goal:30.73, labor_goal:80, dt_time_goal:'4:00', cem_goal:90 };
+  // Current Abril results vs mayo goals (show tracking)
+  const metrics = [
+    { name:'🍽️ Food Cost', goal:'≤'+g.food_cost_goal+'%', real:'30.93%', pct:99, color:'var(--red)', status:'bad' },
+    { name:'👥 Labor', goal:'≥$'+g.labor_goal+'/hr', real:'$76.42', pct:89, color:'linear-gradient(90deg,var(--red),var(--amber))', status:'bad' },
+    { name:'⚡ DT Time', goal:'≤'+g.dt_time_goal, real:'4:31', pct:78, color:'linear-gradient(90deg,var(--red),var(--amber))', status:'bad' },
+    { name:'⭐ CEM', goal:'≥'+g.cem_goal+'%', real:'88%', pct:88, color:'linear-gradient(90deg,var(--amber),var(--green))', status:'warn' },
+    { name:'🎯 Smart Shop DT', goal:'44/44', real:'41/44', pct:93, color:'linear-gradient(90deg,var(--amber),var(--green))', status:'warn' },
+  ];
+  document.getElementById('home-goals-strip').innerHTML = metrics.map(m => `
+    <div class="goals-row">
+      <div class="goal-name">${m.name}</div>
+      <div class="goal-track"><div class="goal-fill" style="width:${m.pct}%;background:${m.color}"></div></div>
+      <div class="goal-nums">
+        <div class="goal-real" style="color:${m.status==='bad'?'var(--red-b)':'var(--amber)'}">${m.real}</div>
+        <div class="goal-target">Meta: ${m.goal}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── LOAD LATEST WEEK ───────────────────────────────────────────────────────
+async function loadLatestWeek() {
+  const { data } = await sb.from('weekly_metrics')
+    .select('*').eq('month_year','Mayo 2026')
+    .order('week_start', { ascending: false }).limit(1);
+
+  if (!data || !data.length) {
+    document.getElementById('home-latest-week').innerHTML =
+      '<div class="cl clb">No hay datos semanales cargados aún. Los directores pueden subir reportes desde el <strong>Weekly Tracker</strong>.</div>';
+    return;
+  }
+  const w = data[0];
+  document.getElementById('home-latest-week').innerHTML = renderWeekCard(w);
+}
+
+// ── LOAD WEEKLY CARDS ──────────────────────────────────────────────────────
+async function loadWeeklyCards() {
+  const { data } = await sb.from('weekly_metrics')
+    .select('*').eq('month_year','Mayo 2026')
+    .order('week_start', { ascending: true });
+
+  const weeks = [
+    { label:'Semana 1', dates:'Mayo 1–8',   start:'2026-05-01', end:'2026-05-08' },
+    { label:'Semana 2', dates:'Mayo 9–15',  start:'2026-05-09', end:'2026-05-15' },
+    { label:'Semana 3', dates:'Mayo 16–22', start:'2026-05-16', end:'2026-05-22' },
+    { label:'Semana 4', dates:'Mayo 23–31', start:'2026-05-23', end:'2026-05-31' },
+  ];
+
+  const container = document.getElementById('weekly-cards');
+  container.innerHTML = weeks.map((wk, i) => {
+    const saved = data?.find(d => d.week_label === wk.label);
+    if (saved) return renderWeekCard(saved);
+    const opacity = [1, 0.6, 0.4, 0.22][i];
+    return `
+      <div class="week-card" style="opacity:${opacity}">
+        <div class="week-head">
+          <div>
+            <div class="week-title">${wk.label}</div>
+            <div class="week-sub">${wk.dates}</div>
+          </div>
+          <span class="wk-status ws-pend">⏳ Pendiente</span>
+        </div>
+        <div class="week-metrics">
+          ${['Food Cost','Labor','DT Time','Smart Shop','CEM'].map(l =>
+            `<div class="wm-cell"><div class="wm-label">${l}</div><div class="wm-val pend">—</div></div>`
+          ).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderWeekCard(w) {
+  const lb_ok  = w.labor_productivity >= 80;
+  const dt_ok  = parseTime(w.dt_total_time) <= 240;
+  const ce_ok  = w.cem_overall >= 90;
+  const overall = [lb_ok, dt_ok, ce_ok].filter(Boolean).length;
+  const statusCls = overall >= 2 ? 'ws-ok' : overall === 1 ? 'ws-warn' : 'ws-bad';
+  const statusLbl = overall >= 2 ? '✅ Buena semana' : overall === 1 ? '⚠ Atención' : '🔴 Acción requerida';
+
+  return `
+    <div class="week-card">
+      <div class="week-head">
+        <div>
+          <div class="week-title">${w.week_label}</div>
+          <div class="week-sub">${formatDate(w.week_start)} – ${formatDate(w.week_end)}</div>
+        </div>
+        <span class="wk-status ${statusCls}">${statusLbl}</span>
+      </div>
+      <div class="week-metrics">
+        <div class="wm-cell">
+          <div class="wm-label">Labor</div>
+          <div class="wm-val ${lb_ok?'ok':w.labor_productivity?'bad':'pend'}">${w.labor_productivity ? '$'+w.labor_productivity : '—'}</div>
+          <div class="wm-note ${lb_ok?'ok':'bad'}">Meta ≥$80/hr</div>
+        </div>
+        <div class="wm-cell">
+          <div class="wm-label">DT Time</div>
+          <div class="wm-val ${dt_ok?'ok':w.dt_total_time?'bad':'pend'}">${w.dt_total_time || '—'}</div>
+          <div class="wm-note ${dt_ok?'ok':'bad'}">Meta ≤4:00</div>
+        </div>
+        <div class="wm-cell">
+          <div class="wm-label">FC Time</div>
+          <div class="wm-val ${parseTime(w.fc_total_time)<=210?'ok':w.fc_total_time?'warn':'pend'}">${w.fc_total_time || '—'}</div>
+          <div class="wm-note">Meta ≤3:30</div>
+        </div>
+        <div class="wm-cell">
+          <div class="wm-label">CEM Overall</div>
+          <div class="wm-val ${ce_ok?'ok':w.cem_overall?'warn':'pend'}">${w.cem_overall ? w.cem_overall+'%' : '—'}</div>
+          <div class="wm-note ${ce_ok?'ok':'warn'}">Meta ≥90%</div>
+        </div>
+        <div class="wm-cell">
+          <div class="wm-label">Labor Oport.</div>
+          <div class="wm-val ${w.labor_opportunity?'bad':'pend'}">${w.labor_opportunity ? '$'+Number(w.labor_opportunity).toLocaleString() : '—'}</div>
+          <div class="wm-note bad">Oportunidad $</div>
+        </div>
+      </div>
+      ${w.analysis_summary ? `<div style="padding:12px 20px 14px;font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border)">${w.analysis_summary}</div>` : ''}
+    </div>`;
+}
+
+function parseTime(t) {
+  if (!t) return 999;
+  const parts = t.split(':');
+  return parseInt(parts[0])*60 + parseInt(parts[1]||0);
+}
+function formatDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('es-PR', { month:'short', day:'numeric' });
+}
+
+// ── WEEKLY TRACKER — PER AREA ─────────────────────────────────────────────
+const areaData = { sos: null, labor: null, cem: null };
+
+function fileSelected(area, input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById(`file-${area}-name`).textContent = file.name;
+  document.getElementById(`btn-${area}`).style.display = 'inline-block';
+  document.getElementById('save-note').style.display = 'block';
+}
+
+const areaPrompts = {
+  sos: `Analiza esta imagen/reporte de Speed of Service de CFA Plaza Centro.
+Metas: DT Total Time ≤4:00, FC Total Time ≤3:30.
+Responde ÚNICAMENTE con este JSON, sin texto adicional, sin markdown, sin explicación:
+{"dt_total_time":"null","fc_total_time":"null","dt_fulfillment":"null","summary":"2 oraciones sobre SOS"}
+Usa "null" como string si no encuentras el dato. Ejemplo real: {"dt_total_time":"4:31","fc_total_time":"3:14","dt_fulfillment":"3:00","summary":"El DT supera la meta por 31 segundos. El FC está dentro del objetivo."}`,
+
+  labor: `Analiza esta imagen/reporte de Labor Productivity de CFA Plaza Centro.
+Meta: Productividad ≥$80/hr.
+Responde ÚNICAMENTE con este JSON, sin texto adicional, sin markdown, sin explicación:
+{"labor_productivity":"null","labor_hours_over":"null","labor_opportunity":"null","summary":"2 oraciones sobre labor"}
+Usa "null" como string si no encuentras el dato. Ejemplo real: {"labor_productivity":"76.42","labor_hours_over":"1137","labor_opportunity":"15484","summary":"La productividad está por debajo de la meta. Lunes es el día de mayor oportunidad."}`,
+
+  cem: `Analiza esta imagen/reporte de CEM Customer Experience de CFA Plaza Centro.
+Meta: Overall ≥90%.
+Responde ÚNICAMENTE con este JSON, sin texto adicional, sin markdown, sin explicación:
+{"cem_overall":"null","cem_taste":"null","cem_fast_service":"null","cem_cleanliness":"null","cem_accuracy":"null","summary":"2 oraciones sobre CEM"}
+Usa "null" como string si no encuentras el dato. Ejemplo real: {"cem_overall":"88","cem_taste":"91","cem_fast_service":"84","cem_cleanliness":"87","cem_accuracy":"99","summary":"Overall 6 puntos bajo el promedio de PR. Order Accuracy es la categoría más fuerte."}`
+};
+
+async function analyzeArea(area) {
+  const input = document.getElementById(`file-${area}`);
+  const file = input.files[0];
+  if (!file) { alert('Selecciona un archivo primero.'); return; }
+
+  const loader = document.getElementById(`${area}-loader`);
+  const result = document.getElementById(`${area}-result`);
+  const status = document.getElementById(`${area}-status`);
+  const btn    = document.getElementById(`btn-${area}`);
+
+  loader.style.display = 'flex';
+  result.style.display = 'none';
+  status.style.display = 'none';
+  btn.disabled = true;
+
+  try {
+    let messageContent;
+
+    if (isImage(file)) {
+      const b64 = await readFileAsBase64(file);
+      messageContent = [
+        { type: 'image', source: { type: 'base64', media_type: file.type, data: b64 } },
+        { type: 'text', text: areaPrompts[area] }
+      ];
+    } else {
+      const text = await readFileAsText(file);
+      messageContent = areaPrompts[area] + `\n\nCONTENIDO:\n${text.slice(0, 8000)}`;
+    }
+
+    const resp = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: messageContent }]
+      })
+    });
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+
+    const raw = data.content?.[0]?.text || '';
+    console.log(`[${area}] Claude response:`, raw);
+
+    // Extract JSON robustly
+    const start = raw.indexOf('{');
+    const end = raw.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('Respuesta inesperada: ' + raw.slice(0, 120));
+
+    const parsed = JSON.parse(raw.slice(start, end + 1));
+
+    // Normalize: convert string "null" → null, convert string numbers → numbers
+    Object.keys(parsed).forEach(k => {
+      if (parsed[k] === 'null' || parsed[k] === '') parsed[k] = null;
+      else if (k !== 'summary' && parsed[k] !== null && !isNaN(parsed[k])) {
+        parsed[k] = parseFloat(parsed[k]);
+      }
+    });
+
+    areaData[area] = parsed;
+
+    const fmt = (v, suffix='') => v !== null && v !== undefined ? v + suffix : '—';
+    const displays = {
+      sos:   () => `⚡ DT Total Time: ${fmt(parsed.dt_total_time)} (Meta ≤4:00)\n🙋 FC Total Time: ${fmt(parsed.fc_total_time)} (Meta ≤3:30)\n🔄 Fulfillment: ${fmt(parsed.dt_fulfillment)}\n\n📝 ${parsed.summary || ''}`,
+      labor: () => `👥 Productividad: ${parsed.labor_productivity ? '$'+parsed.labor_productivity+'/hr' : '—'} (Meta ≥$80)\n📉 Horas sobre bench: ${fmt(parsed.labor_hours_over)}\n💰 Oportunidad $: ${parsed.labor_opportunity ? '$'+Number(parsed.labor_opportunity).toLocaleString() : '—'}\n\n📝 ${parsed.summary || ''}`,
+      cem:   () => `⭐ Overall: ${fmt(parsed.cem_overall,'%')} (Meta ≥90%)\n🍗 Taste: ${fmt(parsed.cem_taste,'%')} | ⚡ Fast: ${fmt(parsed.cem_fast_service,'%')}\n🧹 Cleanliness: ${fmt(parsed.cem_cleanliness,'%')} | ✅ Accuracy: ${fmt(parsed.cem_accuracy,'%')}\n\n📝 ${parsed.summary || ''}`
+    };
+
+    result.textContent = displays[area]();
+    result.style.display = 'block';
+    status.textContent = '✅ Analizado';
+    status.style.color = 'var(--green)';
+    status.style.display = 'inline';
+
+    if (Object.values(areaData).some(v => v !== null)) {
+      document.getElementById('save-btn').style.display = 'inline-block';
+    }
+
+  } catch(err) {
+    console.error(`[${area}] Error:`, err);
+    status.textContent = '❌ ' + err.message;
+    status.style.color = 'var(--red-b)';
+    status.style.display = 'inline';
+  }
+
+  loader.style.display = 'none';
+  btn.disabled = false;
+}
+
+async function saveWeeklyData() {
+  const weekVal = document.getElementById('week-select').value;
+  const [wkLabel, wkStart, wkEnd] = weekVal.split('|');
+
+  const sos   = areaData.sos   || {};
+  const labor = areaData.labor || {};
+  const cem   = areaData.cem   || {};
+
+  const summaries = [sos.summary, labor.summary, cem.summary].filter(Boolean);
+  const combined_summary = summaries.join(' | ');
+
+  const payload = {
+    week_label: wkLabel,
+    week_start: wkStart,
+    week_end: wkEnd,
+    month_year: 'Mayo 2026',
+    dt_total_time:      sos.dt_total_time   || null,
+    fc_total_time:      sos.fc_total_time   || null,
+    labor_productivity: labor.labor_productivity || null,
+    labor_hours_over:   labor.labor_hours_over   || null,
+    labor_opportunity:  labor.labor_opportunity  || null,
+    cem_overall:        cem.cem_overall     || null,
+    cem_taste:          cem.cem_taste       || null,
+    cem_fast_service:   cem.cem_fast_service || null,
+    cem_cleanliness:    cem.cem_cleanliness || null,
+    cem_accuracy:       cem.cem_accuracy    || null,
+    analysis_summary:   combined_summary,
+    uploaded_by:        currentUser.id
+  };
+
+  const { error } = await sb.from('weekly_metrics')
+    .upsert(payload, { onConflict: 'week_label,month_year' });
+
+  if (error) { alert('Error guardando: ' + error.message); return; }
+
+  alert(`✅ ${wkLabel} guardada. El equipo ya puede ver los datos actualizados.`);
+
+  // Reset
+  areaData.sos = null; areaData.labor = null; areaData.cem = null;
+  ['sos','labor','cem'].forEach(a => {
+    document.getElementById(`file-${a}-name`).textContent = 'Ningún archivo seleccionado';
+    document.getElementById(`${a}-result`).style.display = 'none';
+    document.getElementById(`${a}-status`).style.display = 'none';
+    document.getElementById(`btn-${a}`).style.display = 'none';
+    document.getElementById(`file-${a}`).value = '';
+  });
+  document.getElementById('save-btn').style.display = 'none';
+  document.getElementById('save-note').style.display = 'none';
+
+  await Promise.all([loadWeeklyCards(), loadLatestWeek()]);
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function isImage(file) {
+  return file.type.startsWith('image/');
+}
+
+async function analyzeArea(area) {
+  const input = document.getElementById(`file-${area}`);
+  const file = input.files[0];
+  if (!file) { alert('Selecciona un archivo primero.'); return; }
+
+  const loader = document.getElementById(`${area}-loader`);
+  const result = document.getElementById(`${area}-result`);
+  const status = document.getElementById(`${area}-status`);
+  const btn    = document.getElementById(`btn-${area}`);
+
+  loader.style.display = 'flex';
+  result.style.display = 'none';
+  status.style.display = 'none';
+  btn.disabled = true;
+
+  try {
+    let messageContent;
+
+    if (isImage(file)) {
+      // Send as image to Claude
+      const b64 = await readFileAsBase64(file);
+      const mediaType = file.type; // e.g. image/jpeg, image/png
+      messageContent = [
+        {
+          type: 'image',
+          source: { type: 'base64', media_type: mediaType, data: b64 }
+        },
+        {
+          type: 'text',
+          text: areaPrompts[area]
+        }
+      ];
+    } else {
+      // Send as text
+      const text = await readFileAsText(file);
+      messageContent = areaPrompts[area] + `\n\nREPORTE:\n${text.slice(0, 8000)}`;
+    }
+
+    const resp = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: messageContent }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw = data.content?.[0]?.text || '';
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No se pudo leer la respuesta.');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    areaData[area] = parsed;
+
+    const displays = {
+      sos:   () => `⚡ DT Total Time: ${parsed.dt_total_time || '—'} (Meta ≤4:00)\n🙋 FC Total Time: ${parsed.fc_total_time || '—'} (Meta ≤3:30)\n📝 ${parsed.summary}`,
+      labor: () => `👥 Productividad: ${parsed.labor_productivity ? '$'+parsed.labor_productivity+'/hr' : '—'} (Meta ≥$80)\n📉 Horas sobre bench: ${parsed.labor_hours_over || '—'}\n💰 Oportunidad: ${parsed.labor_opportunity ? '$'+parsed.labor_opportunity : '—'}\n📝 ${parsed.summary}`,
+      cem:   () => `⭐ Overall: ${parsed.cem_overall ? parsed.cem_overall+'%' : '—'} (Meta ≥90%)\n🍗 Taste: ${parsed.cem_taste ? parsed.cem_taste+'%' : '—'} | ⚡ Fast: ${parsed.cem_fast_service ? parsed.cem_fast_service+'%' : '—'}\n✅ Accuracy: ${parsed.cem_accuracy ? parsed.cem_accuracy+'%' : '—'}\n📝 ${parsed.summary}`
+    };
+
+    result.textContent = displays[area]();
+    result.style.display = 'block';
+    status.textContent = '✅ Analizado';
+    status.style.color = 'var(--green)';
+    status.style.display = 'inline';
+
+    if (Object.values(areaData).some(v => v !== null)) {
+      document.getElementById('save-btn').style.display = 'inline-block';
+    }
+
+  } catch(err) {
+    status.textContent = '❌ Error: ' + err.message;
+    status.style.color = 'var(--red-b)';
+    status.style.display = 'inline';
+  }
+
+  loader.style.display = 'none';
+  btn.disabled = false;
+}
+
+// ── EVENTS ─────────────────────────────────────────────────────────────────
+async function loadEvents() {
+  const today = new Date();
+  const dow = today.getDay(); // 0=Sun
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  const weekOf = monday.toISOString().split('T')[0];
+
+  const { data } = await sb.from('events').select(`*, profiles(full_name)`)
+    .eq('week_of', weekOf).order('created_at', { ascending: true });
+
+  const grid = document.getElementById('evt-grid');
+  grid.innerHTML = DAYS.map(day => {
+    const dayEvents = (data || []).filter(e => e.day_of_week === day);
+    return `
+      <div class="evt-day">
+        <div class="evt-day-head">
+          <div class="evt-day-title">${day}</div>
+          <button class="add-evt-btn" onclick="toggleEvtForm('${day}')">+</button>
+        </div>
+        <div class="evt-form" id="evtf-${day}">
+          <select class="evf-type-${day}" style="width:100%;padding:7px 10px;background:var(--s3);color:var(--text);border:1px solid var(--border);border-radius:7px;font-size:12px;margin-bottom:7px">
+            <option value="📢">📢 Anuncio</option>
+            <option value="📅">📅 Evento</option>
+            <option value="⚠️">⚠️ Urgente</option>
+            <option value="✅">✅ Logro</option>
+            <option value="🎯">🎯 Meta</option>
+            <option value="🎉">🎉 Reconocimiento</option>
+          </select>
+          <input class="evf-title-${day}" placeholder="Título..." style="width:100%;padding:7px 10px;background:var(--s3);color:var(--text);border:1px solid var(--border);border-radius:7px;font-size:12px;margin-bottom:7px">
+          <textarea class="evf-body-${day}" placeholder="Detalle (opcional)..." rows="2" style="width:100%;padding:7px 10px;background:var(--s3);color:var(--text);border:1px solid var(--border);border-radius:7px;font-size:12px;resize:none;margin-bottom:7px"></textarea>
+          <div class="evt-form-btns">
+            <button class="evt-submit" onclick="addEvent('${day}','${weekOf}')">Publicar</button>
+            <button class="evt-cancel" onclick="toggleEvtForm('${day}')">Cancelar</button>
+          </div>
+        </div>
+        <div class="evt-list" id="evtlist-${day}">
+          ${dayEvents.length === 0
+            ? '<div class="evt-empty">Sin eventos</div>'
+            : dayEvents.map(e => `
+              <div class="evt-item" id="evt-${e.id}">
+                <div class="evt-emoji">${e.event_type}</div>
+                <div class="evt-body">
+                  <strong>${e.title}</strong>
+                  ${e.body ? `<span>${e.body}</span>` : ''}
+                </div>
+                ${currentProfile && ['operador','director','franquiciador'].includes(currentProfile.role)
+                  ? `<button class="evt-del" onclick="deleteEvent('${e.id}')">✕</button>` : ''}
+              </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleEvtForm(day) {
+  const f = document.getElementById('evtf-'+day);
+  f.style.display = f.style.display === 'block' ? 'none' : 'block';
+}
+
+async function addEvent(day, weekOf) {
+  const type  = document.querySelector(`.evf-type-${day}`)?.value;
+  const title = document.querySelector(`.evf-title-${day}`)?.value.trim();
+  const body  = document.querySelector(`.evf-body-${day}`)?.value.trim();
+  if (!title) return;
+
+  const { error } = await sb.from('events').insert({
+    day_of_week: day, week_of: weekOf,
+    event_type: type, title, body,
+    created_by: currentUser.id
+  });
+  if (error) { alert('Error: ' + error.message); return; }
+  await loadEvents();
+}
+
+async function deleteEvent(id) {
+  await sb.from('events').delete().eq('id', id);
+  document.getElementById('evt-'+id)?.remove();
+}
+
+// ── SOPs ───────────────────────────────────────────────────────────────────
+async function loadSOPs() {
+  const { data } = await sb.from('sops').select('*').order('sort_order');
+  const container = document.getElementById('sops-list');
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="cl clb">No hay SOPs cargados aún.</div>';
+    return;
+  }
+  container.innerHTML = data.map(s => `
+    <a href="${s.drive_url}" target="_blank" class="sop-link">
+      <div class="sop-icon">📄</div>
+      <div>
+        <div class="sop-name">${s.name}</div>
+        <div class="sop-cat">${s.category}</div>
+      </div>
+      <div class="sop-arrow">→</div>
+    </a>`).join('');
+}
+
+async function addSOP() {
+  const name = document.getElementById('sop-name').value.trim();
+  const cat  = document.getElementById('sop-cat').value;
+  const url  = document.getElementById('sop-url').value.trim();
+  if (!name || !url) { alert('Completa el nombre y el link.'); return; }
+
+  // Convert to preview URL if needed
+  const previewUrl = url.includes('/view') ? url.replace('/view','/preview') : url;
+
+  const { error } = await sb.from('sops').insert({
+    name, category: cat, drive_url: previewUrl, created_by: currentUser.id
+  });
+  if (error) { alert('Error: ' + error.message); return; }
+  document.getElementById('sop-name').value = '';
+  document.getElementById('sop-url').value = '';
+  await loadSOPs();
+}
+
+// ── ADMIN ──────────────────────────────────────────────────────────────────
+async function loadAdminUsers() {
+  const { data } = await sb.from('profiles').select('*').order('role');
+  const container = document.getElementById('admin-users');
+  if (!data) return;
+  container.innerHTML = data.map(u => `
+    <div class="user-row">
+      <div class="user-avatar" style="width:34px;height:34px;font-size:13px">${u.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${u.full_name}</div>
+      </div>
+      <span class="role-badge role-${u.role}">${roleLabel(u.role)}</span>
+    </div>`).join('');
+}
+
+async function createUser() {
+  const name  = document.getElementById('new-user-name').value.trim();
+  const email = document.getElementById('new-user-email').value.trim();
+  const pass  = document.getElementById('new-user-pass').value.trim();
+  const role  = document.getElementById('new-user-role').value;
+  const msg   = document.getElementById('create-user-msg');
+
+  if (!name || !email || !pass) { msg.textContent='Completa todos los campos.'; msg.style.display='block'; msg.style.color='var(--red-b)'; return; }
+  if (pass.length < 8) { msg.textContent='Password debe tener mínimo 8 caracteres.'; msg.style.display='block'; msg.style.color='var(--red-b)'; return; }
+
+  const { data, error } = await sb.auth.admin?.createUser({
+    email, password: pass,
+    user_metadata: { full_name: name, role },
+    email_confirm: true
+  });
+
+  // Fallback: use signUp if admin API not available
+  if (error || !data) {
+    const { data: signupData, error: signupErr } = await sb.auth.signUp({
+      email, password: pass,
+      options: { data: { full_name: name, role } }
+    });
+    if (signupErr) { msg.textContent='Error: '+signupErr.message; msg.style.display='block'; msg.style.color='var(--red-b)'; return; }
+  }
+
+  msg.textContent = '✅ Usuario creado. Ya puede hacer login con ' + email;
+  msg.style.display = 'block';
+  msg.style.color = 'var(--green)';
+  document.getElementById('new-user-name').value = '';
+  document.getElementById('new-user-email').value = '';
+  document.getElementById('new-user-pass').value = '';
+  await loadAdminUsers();
+}
+
+// ── DRAG & DROP ────────────────────────────────────────────────────────────
+const dz = document.getElementById('drop-zone');
+if (dz) {
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    document.getElementById('report-files').files = e.dataTransfer.files;
+    dz.querySelector('.upload-sub').textContent = e.dataTransfer.files.length + ' archivo(s) seleccionado(s)';
+  });
+}
+</script>
+</body>
+</html>
